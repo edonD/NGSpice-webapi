@@ -1,5 +1,6 @@
 import express from "express";
 import { runNgspice } from "./runNgspice.js";
+import { parseNgspiceOutput } from "./parseNgspiceOutput.js";
 import fs from "fs";
 
 const app = express();
@@ -16,6 +17,7 @@ app.get("/run-ngspice", async (req, res) => {
 
   try {
     const result = await runNgspice(file);
+    parseNgspiceOutput(result);
     res.send(result);
   } catch (error) {
     res.status(500).send(error.message);
