@@ -2,12 +2,14 @@ import express from "express";
 import { runNgspice } from "./runNgspice.js";
 import { parseNgspiceOutput } from "./parseNgspiceOutput.js";
 import fs from "fs";
+import plotly from "plotly.js-dist";
+const { Plotly } = plotly;
 
 const app = express();
 
 app.use(express.json()); // Enable JSON request bodies
 
-// Run ngspice with a file
+// Run ngspice with a file and plot the results
 app.get("/run-ngspice", async (req, res) => {
   const file = req.query.file;
   if (!file) {
@@ -16,9 +18,17 @@ app.get("/run-ngspice", async (req, res) => {
   }
 
   try {
-    const result = await runNgspice(file);
-    parseNgspiceOutput(result);
-    res.send(result);
+    const stdout = await runNgspice(file);
+    const data = parseNgspiceOutput(stdout);
+    const layout = {
+      title: "Ngspice simulation results",
+      xaxis: { title: "Time (s)" },
+      yaxis: { title: "Voltage (V)" },
+    };
+    const figure = { data, layout };
+    const imageData = await Plotly.toImage(figure, { format: "png" });
+    res.set("Content-Type", "image/png");
+    res.send(imageData);
   } catch (error) {
     res.status(500).send(error.message);
   }
