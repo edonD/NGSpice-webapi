@@ -22,56 +22,19 @@ app.get("/run-ngspice", async (req, res) => {
     const stdout = await runNgspice(file);
     const data = parseNgspiceOutput(stdout);
 
-    const canvas = createCanvas(800, 600);
-    const ctx = canvas.getContext("2d");
-
-    const chart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: data.time,
-        datasets: [
-          {
-            label: "Voltage (V)",
-            data: data.voltage,
-            fill: false,
-            borderColor: "rgb(75, 192, 192)",
-            tension: 0.1,
-          },
-        ],
-      },
-      options: {
-        responsive: false,
-        plugins: {
-          title: {
-            display: true,
-            text: "Ngspice simulation results",
-          },
-          legend: {
-            position: "bottom",
-          },
-        },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: "Time (s)",
-            },
-          },
-          y: {
-            title: {
-              display: true,
-              text: "Voltage (V)",
-            },
-            suggestedMin: 0,
-            suggestedMax: 5,
-          },
-        },
-      },
+    // Write the simulation data to a file
+    const filename = "simulation-data.txt";
+    fs.writeFile(filename, stdout, (err) => {
+      if (err) {
+        console.error(err);
+        res.status(500).send("Error writing file");
+      } else {
+        // Send the file as a response with the appropriate content type
+        res.set("Content-Type", "text/plain");
+        res.attachment(filename);
+        res.sendFile(filename, { root: __dirname });
+      }
     });
-
-    const imageData = canvas.toBuffer("image/png");
-    res.set("Content-Type", "image/png");
-    res.send(imageData);
   } catch (error) {
     res.status(500).send(error.message);
   }
