@@ -1,14 +1,17 @@
 import express from "express";
-import { listDirectoryContents } from "./listDirectoryContents.js";
+import { runNgspice } from "./runNgspice.js";
 
 const app = express();
-const directoryPath1 = "C:\\";
 
-app.get("/list-directory-contents", async (req, res) => {
-  const directoryPath = req.query.directoryPath || ".";
+app.get("/run-ngspice", async (req, res) => {
+  const file = req.query.file;
+  if (!file) {
+    res.status(400).send("Missing file parameter");
+    return;
+  }
 
   try {
-    const result = await listDirectoryContents(directoryPath);
+    const result = await runNgspice(file);
     res.send(result);
   } catch (error) {
     res.status(500).send(error.message);

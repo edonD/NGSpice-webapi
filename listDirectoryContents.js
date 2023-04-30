@@ -1,8 +1,8 @@
 import { spawn } from "child_process";
 
-export function listDirectoryContents(directoryPath) {
+export function runNgspice(file) {
   return new Promise((resolve, reject) => {
-    const child = spawn("ls", ["-l", directoryPath]);
+    const child = spawn("ngspice", [file]);
 
     let stdout = "";
     let stderr = "";
