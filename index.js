@@ -2,8 +2,9 @@ import express from "express";
 import { runNgspice } from "./runNgspice.js";
 import { parseNgspiceOutput } from "./parseNgspiceOutput.js";
 import fs from "fs";
-import plotly from "plotly.js-dist";
-const { Plotly } = plotly;
+import { Chart } from "chart.js";
+
+import { createCanvas } from "canvas";
 
 const app = express();
 
@@ -20,13 +21,55 @@ app.get("/run-ngspice", async (req, res) => {
   try {
     const stdout = await runNgspice(file);
     const data = parseNgspiceOutput(stdout);
-    const layout = {
-      title: "Ngspice simulation results",
-      xaxis: { title: "Time (s)" },
-      yaxis: { title: "Voltage (V)" },
-    };
-    const figure = { data, layout };
-    const imageData = await Plotly.toImage(figure, { format: "png" });
+
+    const canvas = createCanvas(800, 600);
+    const ctx = canvas.getContext("2d");
+
+    const chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: data.time,
+        datasets: [
+          {
+            label: "Voltage (V)",
+            data: data.voltage,
+            fill: false,
+            borderColor: "rgb(75, 192, 192)",
+            tension: 0.1,
+          },
+        ],
+      },
+      options: {
+        responsive: false,
+        plugins: {
+          title: {
+            display: true,
+            text: "Ngspice simulation results",
+          },
+          legend: {
+            position: "bottom",
+          },
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: "Time (s)",
+            },
+          },
+          y: {
+            title: {
+              display: true,
+              text: "Voltage (V)",
+            },
+            suggestedMin: 0,
+            suggestedMax: 5,
+          },
+        },
+      },
+    });
+
+    const imageData = canvas.toBuffer("image/png");
     res.set("Content-Type", "image/png");
     res.send(imageData);
   } catch (error) {
